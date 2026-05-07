@@ -1,0 +1,37 @@
+[project]
+name = "nonebot-plugin-dotcharacter"
+version = "2.0.0"
+description = "NoneBot 插件：加载 dot-skill / colleague-skill 蒸馏角色，通过 QQ Bot 进行 AI 角色扮演对话"
+requires-python = ">=3.9"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "tghrt" }]
+keywords = ["nonebot", "nonebot2", "plugin", "dot-skill", "colleague-skill", "roleplay", "character", "ai-chat"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Communications :: Chat",
+]
+
+dependencies = [
+    "nonebot2>=2.3.0",
+    "nonebot-adapter-onebot>=0.3.0",
+    "httpx>=0.24.0",
+    "pyyaml>=6.0",
+    "nonebot-plugin-localstore>=0.4.0",
+]
+
+[project.entry-points."nonebot"]
+dotcharacter = "nonebot_plugin_dotcharacter"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
