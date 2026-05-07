@@ -1,8 +1,26 @@
+<div align="center">
+  <a href="https://v2.nonebot.dev/store"><img src="https://github.com/A-kirami/nonebot-plugin-template/blob/resources/nbp_logo.png" width="180" height="180" alt="NoneBotPluginLogo"></a>
+  <br>
+  <p><img src="https://github.com/A-kirami/nonebot-plugin-template/blob/resources/NoneBotPlugin.svg" width="240" alt="NoneBotPluginText"></p>
+</div>
+
+<div align="center">
+
 # nonebot-plugin-dotcharacter
 
-> 🎭 加载 dot-skill / colleague-skill 蒸馏的角色，通过 QQ Bot 进行 AI 角色扮演对话
+_✨ 加载 dot-skill / colleague-skill 蒸馏角色，通过 QQ Bot 进行 AI 角色扮演对话 ✨_
 
-## 原理
+<a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/TonyLiangP2010405/nonebot-plugin-dotcharacter.svg" alt="license">
+</a>
+<a href="https://pypi.python.org/pypi/nonebot-plugin-dotcharacter">
+    <img src="https://img.shields.io/pypi/v/nonebot-plugin-dotcharacter.svg" alt="pypi">
+</a>
+<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
+
+</div>
+
+## 📖 介绍
 
 与 Claude Code 使用 dot-skill 角色对话完全一致：
 
@@ -13,115 +31,108 @@
 
 本插件做的事情：读取 SKILL.md → 构造系统提示词 → 管理多用户对话历史 → 调用 LLM API → 返回角色回复。
 
-## 安装
+### 特性
 
-```bash
-pip install nonebot-plugin-dotcharacter
-```
+- 🎭 支持 celebrity / colleague / relationship 三类角色
+- 🤖 支持 **9 个 LLM Provider** 预设（DeepSeek / OpenAI / Kimi / Qwen / Zhipu / SiliconFlow / Groq / Ollama / Custom）
+- 📂 多目录角色扫描，支持 dot-skill 和 colleague-skill 两种格式
+- 🔥 热加载角色，无需重启
+- 💬 群聊 @机器人 触发对话，命令无需 @
+- 👑 管理员权限控制（命令仅管理员可用）
+- 🧠 多用户会话隔离
 
-或使用 NB-CLI：
+## 💿 安装
 
-```bash
-nb plugin install nonebot-plugin-dotcharacter
-```
+<details open>
+<summary>使用 nb-cli 安装</summary>
+在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
-## 配置
+    nb plugin install nonebot-plugin-dotcharacter
 
-在 NoneBot 的 `.env` 文件中添加：
+</details>
 
-```env
-# LLM（支持所有 OpenAI 兼容接口）
-DOTCHARACTER_PROVIDER=deepseek           # openai/deepseek/kimi/qwen/zhipu/siliconflow/groq/ollama/custom
-DOTCHARACTER_API_KEY=sk-your-api-key
-DOTCHARACTER_MODEL=deepseek-chat
+<details>
+<summary>使用包管理器安装</summary>
+在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令
 
-# 角色目录（逗号分隔多个路径）
-# 不设置则自动查找 Claude Code / Hermes / OpenClaw / colleague-skill 默认位置
-DOTCHARACTER_SKILLS_PATH=C:/path/to/characters/skills
+<details>
+<summary>pip</summary>
 
-# 可选
-DOTCHARACTER_MAX_HISTORY=20              # 对话历史条数
-DOTCHARACTER_TEMPERATURE=0.8
-DOTCHARACTER_MAX_TOKENS=1024
-DOTCHARACTER_TIMEOUT=60
+    pip install nonebot-plugin-dotcharacter
+</details>
+<details>
+<summary>pdm</summary>
 
-# 权限（可选）
-DOTCHARACTER_ADMIN_QQ=123456789          # 管理员 QQ 号，逗号分隔
-DOTCHARACTER_ALLOWED_GROUPS=987654321    # 允许的群号，逗号分隔。留空则全部允许
-```
+    pdm add nonebot-plugin-dotcharacter
+</details>
+<details>
+<summary>poetry</summary>
 
-## 使用方法
+    poetry add nonebot-plugin-dotcharacter
+</details>
 
-### 管理员命令
+打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
 
-| 命令 | 说明 |
-|------|------|
-| `!角色列表` | 列出所有可用角色 |
-| `!角色切换 <名称>` | 切换到指定角色 |
-| `!角色退出` | 退出当前对话 |
-| `!重置对话` | 清空对话历史 |
-| `!角色信息 [名称]` | 查看角色详情 |
-| `!角色路径` | 查看当前扫描的目录 |
-| `!角色刷新` | 重新扫描角色目录 |
-| `!角色导入 add <路径>` | 添加角色目录 |
-| `!模型切换` | 查看当前 LLM 配置 |
-| `!模型切换 provider <名称>` | 切换 LLM Provider |
-| `!模型切换 model <名称>` | 切换模型 |
+    plugins = ["nonebot_plugin_dotcharacter"]
 
-### 角色对话
+</details>
 
-切换到角色后，**直接发送消息**即可对话。
-群聊中需要 **@机器人** 触发对话。
+## ⚙️ 配置
 
-## 角色目录结构
+在 nonebot2 项目的 `.env` 文件中添加下表中的配置
 
-插件自动扫描以下目录：
-- `DOTCHARACTER_SKILLS_PATH` 指定的路径（逗号分隔）
-- `~/.claude/skills/dot-skill/skills/`
-- `~/.hermes/skills/dot-skill/skills/`
-- `~/colleague-skill/skills/`
-- 以及其他常见位置
+| 配置项 | 必填 | 默认值 | 说明 |
+|:-----:|:----:|:----:|:----:|
+| DOTCHARACTER_PROVIDER | 否 | custom | LLM Provider 预设：deepseek / openai / kimi / qwen / zhipu / siliconflow / groq / ollama / custom |
+| DOTCHARACTER_API_KEY | 是 | 无 | API Key |
+| DOTCHARACTER_API_BASE | 否 | https://api.openai.com/v1 | API 地址（provider=custom 时有效） |
+| DOTCHARACTER_MODEL | 否 | gpt-4o-mini | 模型名称 |
+| DOTCHARACTER_SKILLS_PATH | 否 | 自动查找 | 角色目录路径（逗号分隔） |
+| DOTCHARACTER_MAX_HISTORY | 否 | 20 | 对话历史条数 |
+| DOTCHARACTER_TEMPERATURE | 否 | 0.8 | 生成温度 (0.0-2.0) |
+| DOTCHARACTER_MAX_TOKENS | 否 | 1024 | 最大 Token 数 |
+| DOTCHARACTER_TIMEOUT | 否 | 60 | API 超时秒数 |
+| DOTCHARACTER_ADMIN_QQ | 否 | 无 | 管理员 QQ 号（逗号分隔） |
+| DOTCHARACTER_ALLOWED_GROUPS | 否 | 无 | 允许的群号（逗号分隔，留空全部允许） |
 
-期望目录结构（dot-skill / colleague-skill 输出）：
+### LLM Provider 预设
 
-```
-skills/
-├── colleague/<slug>/SKILL.md + meta.json + persona.md
-├── relationship/<slug>/SKILL.md + meta.json + persona.md
-└── celebrity/<slug>/SKILL.md + meta.json + persona.md
-```
+| Provider | 默认模型 | Base URL |
+|:--------:|:--------:|:--------:|
+| deepseek | deepseek-chat | https://api.deepseek.com |
+| openai | gpt-4o | https://api.openai.com/v1 |
+| kimi | moonshot-v1-8k | https://api.moonshot.cn/v1 |
+| qwen | qwen-plus | https://dashscope.aliyuncs.com/compatible-mode/v1 |
+| zhipu | glm-4-plus | https://open.bigmodel.cn/api/paas/v4 |
+| siliconflow | Qwen/Qwen2.5-72B-Instruct | https://api.siliconflow.cn/v1 |
+| groq | llama-3.3-70b-versatile | https://api.groq.com/openai/v1 |
+| ollama | llama3 | http://localhost:11434/v1 |
+| custom | gpt-4o-mini | 自定义 |
 
-把蒸馏好的角色文件放到任意目录，用 `!角色导入 add` 或配置 `.env` 即可加载。
+## 🎉 使用
 
-## 支持的 LLM
+### 指令表
 
-| Provider | 说明 |
-|----------|------|
-| `deepseek` | DeepSeek（默认推荐） |
-| `openai` | OpenAI |
-| `kimi` | Moonshot Kimi |
-| `qwen` | 阿里通义千问 |
-| `zhipu` | 智谱 GLM |
-| `siliconflow` | SiliconFlow |
-| `groq` | Groq |
-| `ollama` | 本地 Ollama |
-| `custom` | 自定义 OpenAI 兼容接口 |
+| 指令 | 权限 | 需要@ | 范围 | 说明 |
+|:-----:|:----:|:----:|:----:|:----:|
+| `!角色列表` | 管理员 | 否 | 群聊/私聊 | 列出所有可用角色 |
+| `!角色切换 <名称>` | 管理员 | 否 | 群聊/私聊 | 切换到指定角色 |
+| `!角色退出` | 管理员 | 否 | 群聊/私聊 | 退出当前对话 |
+| `!重置对话` | 管理员 | 否 | 群聊/私聊 | 清空对话历史 |
+| `!角色信息 [名称]` | 管理员 | 否 | 群聊/私聊 | 查看角色详情 |
+| `!角色路径` | 管理员 | 否 | 群聊/私聊 | 查看当前扫描的目录 |
+| `!角色刷新` | 管理员 | 否 | 群聊/私聊 | 重新扫描角色目录 |
+| `!角色导入 add <路径>` | 管理员 | 否 | 群聊/私聊 | 添加角色目录 |
+| `!模型切换` | 管理员 | 否 | 群聊/私聊 | 查看当前 LLM 配置 |
+| `!模型切换 provider <名称>` | 管理员 | 否 | 群聊/私聊 | 切换 LLM Provider |
+| `!模型切换 model <名称>` | 管理员 | 否 | 群聊/私聊 | 切换模型 |
+| 直接对话 | 所有人 | 群聊需要 | 群聊/私聊 | 与角色对话 |
 
-## 权限模型
+## 🔗 相关项目
 
-- 命令（`!角色*` 等）：仅管理员可用（`DOTCHARACTER_ADMIN_QQ`）
-- 角色扮演对话：所有用户可用
-- 群聊 @机器人 才触发对话（命令不需要 @）
+- [dot-skill](https://github.com/titanwings/dot-skill) — 角色蒸馏工具
+- [colleague-skill](https://github.com/titanwings/colleague-skill) — 同事角色蒸馏（格式兼容）
 
-## 依赖
-
-- Python >= 3.9
-- nonebot2 >= 2.3.0
-- nonebot-adapter-onebot >= 0.3.0
-- httpx >= 0.24.0
-- pyyaml >= 6.0
-- nonebot-plugin-localstore >= 0.4.0
-
-## License
+## 📄 许可证
 
 MIT
