@@ -69,12 +69,12 @@ __plugin_meta__ = PluginMetadata(
         "切换到角色后，直接发消息即可对话。群聊中需 @机器人。"
     ),
     type="application",
-    homepage="https://github.com/nonebot/plugin-dotcharacter",
+    homepage="https://github.com/TonyLiangP2010405/nonebot-plugin-dotcharacter",
     config=DotCharacterConfig,
     supported_adapters={"~onebot.v11"},
     extra={
         "author": "tghrt",
-        "version": "2.0.0",
+        "version": "2.0.2",
     },
 )
 
@@ -189,10 +189,9 @@ def _is_group_allowed(event: Event) -> bool:
 
 
 def _scope_id(event: Event) -> str:
-    uid = event.get_user_id()
     if _is_group(event):
-        return f"{uid}:{_get_group_id(event)}"
-    return uid
+        return f"group:{_get_group_id(event)}"
+    return event.get_user_id()
 
 
 async def _combined_perm(event: Event) -> bool:
