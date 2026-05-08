@@ -25,21 +25,6 @@ from nonebot.permission import Permission
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule
 
-# 本地存储实例（NoneBot 启动后才可用）
-_store = None
-
-
-def _get_store():
-    """懒加载 localstore，仅在 NoneBot 运行时导入。"""
-    global _store
-    if _store is None:
-        try:
-            import nonebot_plugin_localstore as s
-            _store = s
-        except Exception:
-            pass
-    return _store
-
 from .config import get_config, PROVIDER_PRESETS, DotCharacterConfig
 from .character_loader import (
     CharacterMeta,
@@ -74,7 +59,7 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"},
     extra={
         "author": "tghrt",
-        "version": "2.0.5",
+        "version": "2.0.6",
     },
 )
 
@@ -653,8 +638,6 @@ driver = get_driver()
 @driver.on_startup
 async def _on_startup():
     logger.info("[dotcharacter] 插件启动中...")
-    # 懒加载 localstore（仅在 NoneBot 环境中可用）
-    _get_store()
     await _ensure_initialized()
     cfg = get_config()
     admins = cfg.get_admin_qqs()
