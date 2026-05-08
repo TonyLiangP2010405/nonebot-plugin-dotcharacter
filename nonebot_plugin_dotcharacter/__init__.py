@@ -74,7 +74,7 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"},
     extra={
         "author": "tghrt",
-        "version": "2.0.4",
+        "version": "2.0.5",
     },
 )
 
@@ -622,9 +622,16 @@ async def handle_chat(matcher: Matcher, event: Event):
         await matcher.finish(f"❌ {e}")
     except RuntimeError as e:
         logger.error(f"[dotcharacter] LLM 调用失败: {e}")
-        await matcher.finish(
-            f"😵 {char.display_name} 暂时无法回应...\n（API 错误，请稍后再试）"
-        )
+        err_msg = str(e)
+        if "超时" in err_msg or "timeout" in err_msg.lower():
+            await matcher.finish(
+                f"😵 {char.display_name} 响应超时了...\n"
+                f"（API 连不上或太慢，等几秒再试试？）"
+            )
+        else:
+            await matcher.finish(
+                f"😵 {char.display_name} 暂时无法回应...\n（API 错误，请稍后再试）"
+            )
     except Exception as e:
         logger.error(f"[dotcharacter] 未知错误: {e}")
         await matcher.finish(f"😵 出了点问题：{type(e).__name__}")

@@ -4,6 +4,7 @@
 OpenAI / DeepSeek / Kimi / Qwen / Zhipu / SiliconFlow / Groq / Ollama / 自定义
 """
 
+import asyncio
 from typing import List, Optional
 
 import httpx
@@ -36,6 +37,7 @@ async def chat_completion(
 
     自动根据 Provider 预设或自定义 api_base 构造请求 URL。
     兼容所有 OpenAI Chat Completions 格式的 API。
+    支持 3 次重试（指数退避）。
     """
     api_key = config.dotcharacter_api_key
     if not api_key or api_key.startswith("sk-your-"):
@@ -57,22 +59,45 @@ async def chat_completion(
         "max_tokens": max_tokens or config.dotcharacter_max_tokens,
     }
 
-    async with httpx.AsyncClient(timeout=config.dotcharacter_timeout) as client:
-        response = await client.post(url, json=payload, headers=headers)
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            async with httpx.AsyncClient(
+                timeout=config.dotcharacter_timeout,
+                limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+            ) as client:
+                response = await client.post(url, json=payload, headers=headers)
 
-        if response.status_code != 200:
-            err_detail = response.text[:500]
-            raise RuntimeError(
-                f"LLM API 返回错误 (HTTP {response.status_code}): {err_detail}"
-            )
+                if response.status_code != 200:
+                    err_detail = response.text[:500]
+                    raise RuntimeError(
+                        f"LLM API 返回错误 (HTTP {response.status_code}): {err_detail}"
+                    )
 
-        data = response.json()
-        choices = data.get("choices", [])
-        if not choices:
-            raise RuntimeError(f"LLM API 返回空 choices: {data}")
+                data = response.json()
+                choices = data.get("choices", [])
+                if not choices:
+                    raise RuntimeError(f"LLM API 返回空 choices: {data}")
 
-        content = choices[0].get("message", {}).get("content", "")
-        return content.strip()
+                content = choices[0].get("message", {}).get("content", "")
+                return content.strip()
+
+        except (httpx.TimeoutException, httpx.ReadTimeout, httpx.ConnectTimeout) as e:
+            if attempt == max_retries:
+                raise RuntimeError(
+                    f"LLM API 请求超时（已重试 {max_retries} 次）: {type(e).__name__}"
+                )
+            wait = 2 ** attempt  # 指数退避: 2s, 4s
+            await asyncio.sleep(wait)
+            continue
+
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(f"LLM API HTTP 错误: {e}")
+        except httpx.RequestError as e:
+            raise RuntimeError(f"LLM API 网络请求失败: {type(e).__name__}: {e}")
+
+    # 理论上不会走到这里
+    raise RuntimeError("LLM API 调用失败，超出最大重试次数")
 
 
 async def test_api_connection(config: DotCharacterConfig) -> bool:
