@@ -52,9 +52,16 @@ async def chat_completion(
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
+    # 复制 messages 并在末尾追加字数限制 system 提醒（不污染原始对话历史）
+    api_messages = [dict(m) for m in messages]
+    api_messages.append(system_msg(
+        "【系统强制约束】你的本条回复绝对必须严格控制在30字以内，严禁超过30字。"
+        "如果思考结果超过30字，请立即删减到30字以内再输出。不可违背。"
+    ))
+
     payload = {
         "model": config.dotcharacter_model,
-        "messages": messages,
+        "messages": api_messages,
         "temperature": config.dotcharacter_temperature,
         "max_tokens": max_tokens or config.dotcharacter_max_tokens,
     }

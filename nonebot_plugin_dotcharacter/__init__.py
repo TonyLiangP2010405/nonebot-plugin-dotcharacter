@@ -33,6 +33,7 @@ from .character_loader import (
 )
 from .conversation import get_conversation_manager
 from .llm_client import chat_completion, system_msg, user_msg
+from .rate_limiter import check_rate_limit, set_limit, get_limit, get_status
 
 
 __plugin_meta__ = PluginMetadata(
@@ -556,6 +557,77 @@ async def handle_model(matcher: Matcher, event: Event, args: Message = CommandAr
 
 
 # ═══════════════════════════════════════════════
+# 命令：设置限流
+# ═══════════════════════════════════════════════
+
+cmd_rate_limit = on_command(
+    "设置限流", aliases={"rate_limit", "限流设置"},
+    priority=5, block=True, permission=ADMIN_AND_GROUP,
+)
+
+
+@cmd_rate_limit.handle()
+async def handle_rate_limit(matcher: Matcher, event: Event, args: Message = CommandArg()):
+    text = args.extract_plain_text().strip()
+    sid = _scope_id(event)
+
+    if not text:
+        current = get_limit(sid)
+        status = "无限制（管理员可设置）" if current <= 0 else f"{current} 次/10分钟"
+        await matcher.finish(
+            f"📊 当前限流设置：{status}\n"
+            f"用法：!设置限流 \u003c次数\u003e（0 = 关闭限制）\n"
+            f"说明：按人计数，每人 10 分钟内最多 N 次对话。"
+        )
+
+    if not text.isdigit():
+        await matcher.finish("请输入纯数字。例如：!设置限流 5")
+
+    count = int(text)
+    set_limit(sid, count)
+    if count <= 0:
+        await matcher.finish("✅ 已关闭限流，本群/私聊不再限制对话频率。")
+    else:
+        await matcher.finish(
+            f"✅ 已设置限流：每人 {count} 次/10分钟\n"
+            f"每个用户独立计数，超限后需等窗口重置。"
+        )
+
+
+# ═══════════════════════════════════════════════
+# 命令：限流状态
+# ═══════════════════════════════════════════════
+
+cmd_rate_status = on_command(
+    "限流状态", aliases={"rate_status", "我的限流"},
+    priority=5, block=True, permission=ADMIN_AND_GROUP,
+)
+
+
+@cmd_rate_status.handle()
+async def handle_rate_status(matcher: Matcher, event: Event):
+    sid = _scope_id(event)
+    user_id_raw = _get_raw_qq(event)
+    limit = get_limit(sid)
+    status = get_status(sid, user_id_raw)
+
+    if limit <= 0:
+        await matcher.finish(
+            "📊 当前未设置限流。\n"
+            "管理员可用 !设置限流 \u003c次数\u003e 开启限制。"
+        )
+
+    lines = [f"📊 限流状态（10 分钟窗口）"]
+    lines.append(f"设置上限：{limit} 次")
+    lines.append(f"你已使用：{status['count']} 次")
+    lines.append(f"剩余次数：{status['remaining']} 次")
+    mins = status["window_reset"] // 60
+    secs = status["window_reset"] % 60
+    lines.append(f"窗口重置：{mins}分{secs}秒后")
+    await matcher.finish("\n".join(lines))
+
+
+# ═══════════════════════════════════════════════
 # 自由对话（群聊 @机器人 才触发）
 # ═══════════════════════════════════════════════
 
@@ -581,6 +653,15 @@ async def handle_chat(matcher: Matcher, event: Event):
         await matcher.finish()
 
     sid = _scope_id(event)
+    user_id_raw = _get_raw_qq(event)
+    
+    # 限流检查（分群分人，每人独立计数）
+    limit = get_limit(sid)
+    if limit > 0:
+        allowed, msg = check_rate_limit(sid, user_id_raw)
+        if not allowed:
+            await matcher.finish(msg)
+
     user_name = _get_user_name(event)
     mgr = get_conversation_manager()
     slug = mgr.get_active_character(sid)
